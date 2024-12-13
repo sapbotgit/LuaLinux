@@ -1,7 +1,8 @@
 -- DO NOT DELETE
 -- Exception: Want to rewrite 90% of code
+local cfg = require("../config")
 
-function serializeTable(val, name, skipnewlines, depth)
+local function serializeTable(val, name, skipnewlines, depth)
     skipnewlines = skipnewlines or false
     depth = depth or 0
 
@@ -30,7 +31,7 @@ function serializeTable(val, name, skipnewlines, depth)
     return tmp
 end
 
-function TableConcat(t1,t2)
+local function TableConcat(t1,t2)
     for i=1,#t2 do
         t1[#t1+1] = t2[i]
     end
@@ -102,7 +103,7 @@ local function rawScandir(directory)
 end
 
 local function scandir(directory)
-    return rawScandir("lnx/" .. genpath(directory))
+    return rawScandir(cfg.basedir .. "lnx/" .. genpath(directory))
 end
 
 local function mysplit(inputstr, sep)
