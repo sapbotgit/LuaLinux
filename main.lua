@@ -1,6 +1,6 @@
 print("Loading")
 local curdir = {"root"}
-local util = require("api.utils")
+local util = require("api\\utils")
 local cfg = require("config")
 -- CMDS -------------------------------------------------------------------------------------
 local function clear(args)
@@ -74,7 +74,7 @@ end
 commands = util.TableConcat(commands, {{["alias"] = alias}})
 local plugins = util.rawScandir(cfg.basedir .. "plugins")
 for i=1,#plugins do
-    local plugin = require(cfg.basedir .. "plugins." .. util.mysplit(plugins[i], ".")[1])
+    local plugin = require(cfg.basedir .. "plugins\\" .. util.mysplit(plugins[i], ".")[1])
     commands = util.TableConcat(commands, {plugin.commands})
     idle_cmd = util.TableConcat(idle_cmd, plugin.idle_cmd)
     aliases = util.TableConcat(aliases, {plugin.aliases})
