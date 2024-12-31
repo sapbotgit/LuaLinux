@@ -1,6 +1,26 @@
 -- DO NOT DELETE
 -- Exception: Want to rewrite 90% of code
 local cfg = require("../config")
+local curdir = {"root"}
+
+local function repeatString(str, times)
+    local result = ""
+    for i = 1, times do
+        result = result .. str
+    end
+    return result
+end
+
+local function round(exact)
+    return tonumber(string.format("%.0f", exact))
+end
+
+local function percentage(v, o, t)
+    if v == 0 then
+        return 0
+    end
+    return round((v / o) * t)
+end
 
 local function serializeTable(val, name, skipnewlines, depth)
     skipnewlines = skipnewlines or false
@@ -65,7 +85,7 @@ local function clear()
     end    
 end
 
-local function has_value (tab, val)
+local function has_value(tab, val)
     for index, value in ipairs(tab) do
         if value == val then
             return true
@@ -75,6 +95,19 @@ local function has_value (tab, val)
     return false
 end
 
+local function has_value_l(tabls, val)
+    if has_value(tabls, val) then
+        return true
+    end
+    for index, tabl in ipairs(tabls) do
+        if type(tabl) == "table" then
+            if has_value(getkeys(tabl), val) then
+                return true
+            end
+        end
+    end
+    return false
+end
 
 local function osname()
     local sep = package.config:sub(1,1)
@@ -102,8 +135,17 @@ local function rawScandir(directory)
     return t
 end
 
-local function scandir(directory)
-    return rawScandir(cfg.basedir .. "lnx/" .. genpath(directory))
+-- Function to access the value in A using the path in B
+local function getNestValue(A, B)
+    local current = A
+    for _, key in ipairs(B) do
+        if current[key] then
+            current = current[key]
+        else
+            return nil -- Return nil if the path does not exist
+        end
+    end
+    return current -- Return the final value
 end
 
 local function mysplit(inputstr, sep)
@@ -119,7 +161,6 @@ end
 
 return {
     osname = osname,
-    scandir = scandir,
     mysplit = mysplit,
     has_value = has_value,
     clear = clear,
@@ -127,5 +168,11 @@ return {
     TableConcat = TableConcat,
     genpath = genpath,
     rawScandir = rawScandir,
-    serializeTable = serializeTable
+    serializeTable = serializeTable,
+    repeatString = repeatString,
+    getNestValue = getNestValue,
+    curdir = curdir,
+    round = round,
+    percentage = percentage,
+    has_value_l = has_value_l
 }
