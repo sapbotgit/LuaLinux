@@ -1,13 +1,32 @@
 print("Loading")
-local curdir = {"root"}
 local util = require("api\\utils")
 local cfg = require("config")
+local files = {
+    ["root"] = {},
+    ["dev"] = {
+        ["zero"] = util.repeatString("0", 1000)
+    },
+    ["etc"] = {},
+    ["home"] = {},
+    ["lib"] = {},
+    ["media"] = {},
+    ["mnt"] = {},
+    ["opt"] = {},
+    ["proc"] = {},
+    ["sbin"] = {},
+    ["run"] = {},
+    ["sys"] = {},
+    ["srv"] = {},
+    ["usr"] = {},
+    ["tmp"] = {},
+    ["var"] = {}
+}
 -- CMDS -------------------------------------------------------------------------------------
 local function clear(args)
     util.clear()
 end
 local function ls(args)
-    local lst = util.scandir(curdir)
+    local lst = util.getkeys(util.getNestValue(files, util.curdir))
     if util.has_value(args, "-l") then
         print("total " .. #lst)
         for n=1,#lst do
@@ -26,17 +45,17 @@ local function cd(args)
     local target_dir = args[2]
 
     if target_dir == ".." then
-        if #curdir > 0 then
-            table.remove(curdir)  -- Remove the last directory in the path
+        if #util.curdir > 0 then
+            table.remove(util.curdir)  -- Remove the last directory in the path
         else
             print("sh: cd: already at root")
         end
         return
     end
 
-    local lst = util.scandir(curdir)
+    local lst = util.getkeys(util.getNestValue(files, util.curdir))
     if util.has_value(lst, target_dir) then
-        table.insert(curdir, target_dir)  -- Add the target directory to the current path
+        table.insert(util.curdir, target_dir)  -- Add the target directory to the current path
     else
         print("sh: cd: can't cd to " .. target_dir .. ": No such file or directory")
     end
@@ -44,7 +63,7 @@ end
 local function shutdown(args)
     if args[2] == "now" then
         util.clear()
-        print("Broadcast message from root@wks01 (pts/0) (Sat Apr 21 02:26:30 2012):\n\n\nDevelopment server is going down for maintenance. Please save your work ASAP. \nThe system is going DOWN for system halt in 10 minutes!\n")
+        print("Broadcast message from root@wks01 (pts/0) (Sat Apr 21 02:26:30 2012):\n\n\nDevelopment server is going down for maintenance. Please save your work ASAP. \nThe system is going DOWN for system halt now!\n")
         os.exit()
     end
     print("System has not been booted with systemd as init system (PID 1). Can't operate.")
@@ -84,18 +103,34 @@ local function dummy()
 end
 
 local function find_cmd(args)
-    -- Check if the command exists in the commands table
     if args[1] == "lualnx" then
         if args[2] == "package" then
             if args[3] == "list" then
                 print(table.concat(plugins, ", "))
             end
         elseif args[2] == "help" then
-            print("  LuaLnx info app\n\n- lualnx package list | List installed packages\n- lualnx debug | Debug the current LuaLinux state")
+            print("  LuaLnx info app\n\n- lualnx package list\n    List installed packages\n- lualnx debug\n    Debug the current LuaLinux state\n- lualnx compatibility\n    LuaLinux % of supported cmds")
         elseif args[2] == "debug" then
             print("-- aliases: " .. util.serializeTable(aliases))
             print("-- commands: " .. util.serializeTable(commands))
             print("-- idle_cmd: " .. util.serializeTable(idle_cmd))
+        elseif args[2] == "compatibility" then
+            print("Testing the compatibility...")
+            local total = 0
+            local success = 0
+            local reqcmds = {"alias", "bg", "bind", "break", "cd", "command", "compgen", "complete", "continue", "declare", "dirs", "echo", "enable", "eval", "exec", "exit", "export", "fc", "fg", "getopts", "hash", "help", "history", "jobs", "kill", "let", "local", "logout", "ls", "mapfile", "popd", "pushd", "pwd", "read", "readonly", "return", "set", "shift", "shopt", "source", "suspend", "test", "times", "trap", "type", "typeset", "ulimit", "umask", "unalias", "unset", "wait"}
+            for i=1,#reqcmds do
+                total = total + 1
+                if util.has_value_l(commands, reqcmds[i]) or util.has_value_l(idle_cmd, reqcmds[i]) then
+                    success = success + 1
+                    print(reqcmds[i] .. ": SUCCESS")
+                else
+                    print(reqcmds[i] .. ": FAILED")
+                end
+            end
+            print("Succesed: " .. tostring(success))
+            print("Failed: " .. tostring(total - success))
+            print("Total: " .. tostring(util.percentage(success, total, 100)) .. "%")
         end
         return dummy
     end
@@ -142,7 +177,7 @@ print("Welcome to LuaLinux")
 print("To read what you can do, write 'lualnx help'\n")
 
 while true do
-    io.write("localhost:" .. util.genpath(curdir) .. "# ")
+    io.write("localhost:" .. util.genpath(util.curdir) .. "# ")
     local input = io.read()
     if input ~= "" then
         local args = util.mysplit(input, " ")
