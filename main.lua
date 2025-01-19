@@ -1,32 +1,12 @@
 print("Loading")
 local util = require("api\\utils")
 local cfg = require("config")
-local files = {
-    ["root"] = {},
-    ["dev"] = {
-        ["zero"] = util.repeatString("0", 1000)
-    },
-    ["etc"] = {},
-    ["home"] = {},
-    ["lib"] = {},
-    ["media"] = {},
-    ["mnt"] = {},
-    ["opt"] = {},
-    ["proc"] = {},
-    ["sbin"] = {},
-    ["run"] = {},
-    ["sys"] = {},
-    ["srv"] = {},
-    ["usr"] = {},
-    ["tmp"] = {},
-    ["var"] = {}
-}
 -- CMDS -------------------------------------------------------------------------------------
 local function clear(args)
     util.clear()
 end
 local function ls(args)
-    local lst = util.getkeys(util.getNestValue(files, util.curdir))
+    local lst = util.getkeys(util.getNestValue(util.files, util.curdir))
     if util.has_value(args, "-l") then
         print("total " .. #lst)
         for n=1,#lst do
@@ -53,7 +33,7 @@ local function cd(args)
         return
     end
 
-    local lst = util.getkeys(util.getNestValue(files, util.curdir))
+    local lst = util.getkeys(util.getNestValue(util.files, util.curdir))
     if util.has_value(lst, target_dir) then
         table.insert(util.curdir, target_dir)  -- Add the target directory to the current path
     else
@@ -70,8 +50,8 @@ local function shutdown(args)
 end
 -- DATA -------------------------------------------------------------------------------------
 local commands = {{["clear"] = clear, ["ls"] = ls, ["cd"] = cd, ["shutdown"] = shutdown}}
-local idle_cmd = {"touch", "bg", "break"}
-local aliases = {{["poweroff"] = {"shutdown", "now"}}}
+local idle_cmd = {"touch", "bg", "break", "continue", "return"}
+local aliases = {["poweroff"] = {"shutdown", "now"}, ["compgen"] = {"help"}}
 local function alias(args)
     if #args < 2 then
         print("Invalid alias format. Use: alias name=value")
@@ -83,11 +63,13 @@ local function alias(args)
     local zxx = util.mysplit(alias_value, "=")
 
     if #zxx == 2 then  -- Ensure there are two parts for alias
-        aliases[zxx[1]] = util.mysplit(zxx[2]:gsub("'", ""), " ")  -- Store the alias directly in the aliases table
+        aliases[alias_name] = util.mysplit(zxx[2]:gsub("'", ""), " ")  -- Store the alias directly in the aliases table
     else
         print("Invalid alias format. Use: alias name=value")
     end
 end
+
+
 
 
 commands = util.TableConcat(commands, {{["alias"] = alias}})
@@ -118,10 +100,10 @@ local function find_cmd(args)
             print("Testing the compatibility...")
             local total = 0
             local success = 0
-            local reqcmds = {"alias", "bg", "bind", "break", "cd", "command", "compgen", "complete", "continue", "declare", "dirs", "echo", "enable", "eval", "exec", "exit", "export", "fc", "fg", "getopts", "hash", "help", "history", "jobs", "kill", "let", "local", "logout", "ls", "mapfile", "popd", "pushd", "pwd", "read", "readonly", "return", "set", "shift", "shopt", "source", "suspend", "test", "times", "trap", "type", "typeset", "ulimit", "umask", "unalias", "unset", "wait"}
+            local reqcmds = {"alias", "bg", "bind", "break", "cd", "compgen", "complete", "continue", "declare", "dirs", "echo", "enable", "eval", "exec", "exit", "export", "fc", "fg", "getopts", "hash", "help", "history", "jobs", "kill", "let", "local", "logout", "ls", "mapfile", "popd", "pushd", "pwd", "read", "readonly", "return", "set", "shift", "shopt", "source", "suspend", "test", "times", "trap", "type", "typeset", "ulimit", "umask", "unalias", "unset", "wait"}
             for i=1,#reqcmds do
                 total = total + 1
-                if util.has_value_l(commands, reqcmds[i]) or util.has_value_l(idle_cmd, reqcmds[i]) then
+                if util.has_value_l(commands, reqcmds[i]) or util.has_value_l(idle_cmd, reqcmds[i]) or util.has_value_l(aliases, reqcmds[i]) then
                     success = success + 1
                     print(reqcmds[i] .. ": SUCCESS")
                 else
@@ -151,6 +133,8 @@ local function find_cmd(args)
         local rargs = util.TableConcat(alias_cmd, artmp)  -- Concatenate alias args with remaining args
         return find_cmd(rargs)  -- Recursively find and execute the command
     end
+
+
 
     -- Handle the help command
     if args[1] == "help" then
