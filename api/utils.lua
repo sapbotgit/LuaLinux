@@ -11,6 +11,27 @@ local function repeatString(str, times)
     return result
 end
 
+local files = {
+    ["root"] = {},
+    ["dev"] = {
+        ["zero"] = repeatString("0", 1000)
+    },
+    ["etc"] = {},
+    ["home"] = {},
+    ["lib"] = {},
+    ["media"] = {},
+    ["mnt"] = {},
+    ["opt"] = {},
+    ["proc"] = {},
+    ["sbin"] = {},
+    ["run"] = {},
+    ["sys"] = {},
+    ["srv"] = {},
+    ["usr"] = {},
+    ["tmp"] = {},
+    ["var"] = {}
+}
+
 local function round(exact)
     return tonumber(string.format("%.0f", exact))
 end
@@ -174,5 +195,6 @@ return {
     curdir = curdir,
     round = round,
     percentage = percentage,
-    has_value_l = has_value_l
+    has_value_l = has_value_l,
+    files = files
 }
